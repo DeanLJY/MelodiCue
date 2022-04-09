@@ -1,21 +1,43 @@
-import random
-from time import sleep
-from itertools import count
+"""Sends playlists to kafka.
+
+Usage:
+    python3 producer.py path/to/data
+"""
+import os
+import sys
 import json
-from kafka import KafkaProducer
+import time
+
+import kafka
 
 
-sleep(10)
-producer = KafkaProducer(
-    bootstrap_servers=["kafka:9092"],
-    value_serializer=lambda m: json.dumps(m).encode("ascii"),
+producer = kafka.KafkaProducer(
+    bootstrap_servers=["ec2-34-245-33-31.eu-west-1.compute.amazonaws.com:9092"]
 )
 
-TOPIC_NAME = "test"
 
-for i in count():
-    json_data = {"name": f"node{i}"}
-    producer.send(TOPIC_NAME, json_data)
-    print(f"Sending {json_data}")
+def process_mpd(path):
+    count = 0
+    filenames = os.listdir(path)
+    for filename in sorted(filenames):
+        if filename.startswith("mpd.slice.") and filename.endswith(".json"):
+            fullpath = os.sep.join((path, filename))
+            with open(fullpath) as f:
+                js = f.read()
+
+            mpd_slice = json.loads(js)
+            for playlist in mpd_slice["playlists"]:
+                process_playlist(playlist)
+            count += 1
+            print(count)
+
+
+def process_playlist(playlist):
+    producer.send("spotify", json.dumps(playlist).encode("utf-8"))
     producer.flush()
-    sleep(1)
+    time.sleep(1)
+
+
+if __name__ == "__main__":
+    path = sys.argv[1]
+    process_mpd(path)
