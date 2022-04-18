@@ -10,7 +10,7 @@ from logging import Formatter, FileHandler
 from forms import *
 import os
 from gqlalchemy import Memgraph
-from models import Track, Playlist
+from models import Track, Playlist, to_cypher_value
 
 # ----------------------------------------------------------------------------#
 # App Config.
@@ -44,14 +44,10 @@ def login_required(test):
 # ----------------------------------------------------------------------------#
 
 
-def create_playlist(form_data):
-    Memgraph.execute(f"CREATE (:TRACK {{artist_name: {form_data['ladida']}}})")
-
-
 @app.route("/get-tracks")
 def get_tracks():
     results = memgraph.execute_and_fetch(f"MATCH (n:Track) RETURN n;")
-    tracks = [Track(result["n"]) for result in results]
+    tracks = [Track.create_from_data(result["n"]) for result in results]
     return jsonify(tracks)
 
 
@@ -59,11 +55,12 @@ def get_tracks():
 @app.route("/get-top-tracks/<int:num_of_tracks>")
 def get_most_used_tracks(num_of_tracks):
     results = memgraph.execute_and_fetch(
-        f"MATCH (n:Track)<-[r]-(m) RETURN n, COUNT(m) AS edg_count ORDER BY edg_count DESC LIMIT {num_of_tracks};"
+        "MATCH (n:Track)<-[r]-(m) RETURN n, COUNT(m) AS edg_count ORDER BY edg_count"
+        f" DESC LIMIT {num_of_tracks};"
     )
 
     tracks = [
-        {"track": Track(result["n"]), "num_of_playlists": result["edg_count"]}
+        {"track": Track.create_from_data(result["n"]), "num_of_playlists": result["edg_count"]}
         for result in results
     ]
     return jsonify(tracks)
@@ -73,28 +70,55 @@ def get_most_used_tracks(num_of_tracks):
 @app.route("/get-top-playlists/<int:num_of_playlists>")
 def get_playlists_with_most_tracks(num_of_playlists):
     results = memgraph.execute_and_fetch(
-        f"MATCH (n:Playlist)-[r]->(m) RETURN n, COUNT(m) AS edg_count ORDER BY edg_count DESC LIMIT {num_of_playlists};"
+        "MATCH (n:Playlist)-[r]->(m) RETURN n, COUNT(m) AS edg_count ORDER BY"
+        f" edg_count DESC LIMIT {num_of_playlists};"
     )
     tracks = [
-        {"playlist": Playlist(result["n"]), "num_of_tracks": result["edg_count"]}
+        {"playlist": Playlist.create_from_data(result["n"]), "num_of_tracks": result["edg_count"]}
         for result in results
     ]
     return jsonify(tracks)
 
 
-@app.route("/add-song", methods=["GET", "POST"])
+# @app.route("/add-track", methods=["POST"])
+# def add_track():
+#     try:
+#         data = request.get_json()
+#         playlist_id = to_cypher_value(data["playlist_id"])
+#         artist_name = to_cypher_value(data["artist_name"])
+#         track_uri = to_cypher_value(data["track_uri"])
+#         artist_uri = to_cypher_value(data["artist_uri"])
+#         track_name = to_cypher_value(data["track_name"])
+#         album_uri = to_cypher_value(data["album_uri"])
+#         duration_ms = to_cypher_value(data["duration_ms"])
+#         album_name = to_cypher_value(data["album_name"])
+#         memgraph.execute(
+#             f"CREATE (:{Track.LABEL} {{artist_name: {artist_name}, track_uri:"
+#             f" {track_uri}, artist_uri: {artist_uri}, track_name: {track_name},"
+#             f" album_uri: {album_uri}, duration_ms: {duration_ms}, album_name:"
+#             f" {album_name} }})"
+#         )
+#         return jsonify({"error": True})
+#     except Exception as exp:
+#         return jsonify({"error": str(exp)})
+
+
+@app.route("/create-playlist", methods=["POST"])
 def add_playlist():
-    # "artist_name": "Degiheugi",
-    # "track_uri": "spotify:track:7vqa3sDmtEaVJ2gcvxtRID",
-    # "artist_uri": "spotify:artist:3V2paBXEoZIAhfZRJmo2jL",
-    # "track_name": "Finalement",
-    # "album_uri": "spotify:album:2KrRMJ9z7Xjoz1Az4O6UML",
-    # "duration_ms": 166264,
-    # "album_name": "Dancing Chords and Fireflies"
-    if request.method == "POST":
-        create_track(request.form)
-    else:
-        return show_the_login_form()
+    try:
+        data = request.get_json()
+        name = to_cypher_value(data["name"])
+        playlist = Playlist(name)
+        result = memgraph.execute_and_fetch(f"CREATE (n:{Playlist.LABEL} {{{playlist.to_cypher()}}}) RETURN id(n) as playlist_id;")
+        playlist_id = next(result)["playlist_id"]
+        return jsonify({
+            "playlist_id": playlist_id,
+            "error": None
+        })
+    except Exception as exp:
+        return jsonify({
+            "error": exp
+        })
 
 
 @app.route("/")

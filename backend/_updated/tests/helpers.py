@@ -13,8 +13,9 @@ class TestClient(object):
             headers = {}
         if data:
             data = json.dumps(data)
-        with self.app.test_request_context(url, method=method, data=data,
-                                           headers=headers):
+        with self.app.test_request_context(
+            url, method=method, data=data, headers=headers
+        ):
             rv = self.app.preprocess_request()
             if rv is None:
                 rv = self.app.dispatch_request()
@@ -23,21 +24,21 @@ class TestClient(object):
             return rv
 
     def get(self, url, headers=None):
-        return self.send(url, 'GET', headers=headers)
+        return self.send(url, "GET", headers=headers)
 
     def post(self, url, data, headers=None):
-        return self.send(url, 'POST', data, headers=headers)
+        return self.send(url, "POST", data, headers=headers)
 
     def put(self, url, data, headers={}):
-        return self.send(url, 'PUT', data, headers=headers)
+        return self.send(url, "PUT", data, headers=headers)
 
     def delete(self, url, headers={}):
-        return self.send(url, 'DELETE', headers=headers)
+        return self.send(url, "DELETE", headers=headers)
 
 
 class TestCase(unittest.TestCase):
     def setUp(self):
-        self.app = create_app('config')
+        self.app = create_app("config")
         self.ctx = self.app.app_context()
         self.ctx.push()
         self.client = TestClient(self.app)
