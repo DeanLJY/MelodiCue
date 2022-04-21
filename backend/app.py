@@ -80,27 +80,27 @@ def get_playlists_with_most_tracks(num_of_playlists):
     return jsonify(tracks)
 
 
-# @app.route("/add-track", methods=["POST"])
-# def add_track():
-#     try:
-#         data = request.get_json()
-#         playlist_id = to_cypher_value(data["playlist_id"])
-#         artist_name = to_cypher_value(data["artist_name"])
-#         track_uri = to_cypher_value(data["track_uri"])
-#         artist_uri = to_cypher_value(data["artist_uri"])
-#         track_name = to_cypher_value(data["track_name"])
-#         album_uri = to_cypher_value(data["album_uri"])
-#         duration_ms = to_cypher_value(data["duration_ms"])
-#         album_name = to_cypher_value(data["album_name"])
-#         memgraph.execute(
-#             f"CREATE (:{Track.LABEL} {{artist_name: {artist_name}, track_uri:"
-#             f" {track_uri}, artist_uri: {artist_uri}, track_name: {track_name},"
-#             f" album_uri: {album_uri}, duration_ms: {duration_ms}, album_name:"
-#             f" {album_name} }})"
-#         )
-#         return jsonify({"error": True})
-#     except Exception as exp:
-#         return jsonify({"error": str(exp)})
+@app.route("/add-track", methods=["POST"])
+def add_track():
+    try:
+        data = request.get_json()
+        playlist_id = to_cypher_value(data["playlist_id"])
+        artist_name = to_cypher_value(data["artist_name"])
+        track_uri = to_cypher_value(data["track_uri"])
+        artist_uri = to_cypher_value(data["artist_uri"])
+        track_name = to_cypher_value(data["track_name"])
+        album_uri = to_cypher_value(data["album_uri"])
+        duration_ms = to_cypher_value(data["duration_ms"])
+        album_name = to_cypher_value(data["album_name"])
+        memgraph.execute(
+            f"CREATE (:{Track.LABEL} {{artist_name: {artist_name}, track_uri:"
+            f" {track_uri}, artist_uri: {artist_uri}, track_name: {track_name},"
+            f" album_uri: {album_uri}, duration_ms: {duration_ms}, album_name:"
+            f" {album_name} }})"
+        )
+        return jsonify({"error": True})
+    except Exception as exp:
+        return jsonify({"error": str(exp)})
 
 
 @app.route("/create-playlist", methods=["POST"])
