@@ -20,28 +20,10 @@ app = Flask(__name__)
 app.config.from_object("config")
 memgraph = Memgraph()
 
-# Automatically tear down SQLAlchemy.
-"""
-@app.teardown_request
-def shutdown_session(exception=None):
-    db_session.remove()
-"""
 
-# Login required decorator.
-"""
-def login_required(test):
-    @wraps(test)
-    def wrap(*args, **kwargs):
-        if 'logged_in' in session:
-            return test(*args, **kwargs)
-        else:
-            flash('You need to login first.')
-            return redirect(url_for('login'))
-    return wrap
-"""
-# ----------------------------------------------------------------------------#
-# Controllers.
-# ----------------------------------------------------------------------------#
+class Status:
+    SUCCESS = "success"
+    FAILURE = "failure"
 
 
 @app.route("/get-tracks")
@@ -60,7 +42,10 @@ def get_most_used_tracks(num_of_tracks):
     )
 
     tracks = [
-        {"track": Track.create_from_data(result["n"]), "num_of_playlists": result["edg_count"]}
+        {
+            "track": Track.create_from_data(result["n"]),
+            "num_of_playlists": result["edg_count"],
+        }
         for result in results
     ]
     return jsonify(tracks)
@@ -74,7 +59,10 @@ def get_playlists_with_most_tracks(num_of_playlists):
         f" edg_count DESC LIMIT {num_of_playlists};"
     )
     tracks = [
-        {"playlist": Playlist.create_from_data(result["n"]), "num_of_tracks": result["edg_count"]}
+        {
+            "playlist": Playlist.create_from_data(result["n"]),
+            "num_of_tracks": result["edg_count"],
+        }
         for result in results
     ]
     return jsonify(tracks)
@@ -84,41 +72,80 @@ def get_playlists_with_most_tracks(num_of_playlists):
 def add_track():
     try:
         data = request.get_json()
-        playlist_id = to_cypher_value(data["playlist_id"])
-        artist_name = to_cypher_value(data["artist_name"])
-        track_uri = to_cypher_value(data["track_uri"])
-        artist_uri = to_cypher_value(data["artist_uri"])
-        track_name = to_cypher_value(data["track_name"])
-        album_uri = to_cypher_value(data["album_uri"])
-        duration_ms = to_cypher_value(data["duration_ms"])
-        album_name = to_cypher_value(data["album_name"])
-        memgraph.execute(
-            f"CREATE (:{Track.LABEL} {{artist_name: {artist_name}, track_uri:"
-            f" {track_uri}, artist_uri: {artist_uri}, track_name: {track_name},"
-            f" album_uri: {album_uri}, duration_ms: {duration_ms}, album_name:"
-            f" {album_name} }})"
+        playlist_id = data["playlist_id"]
+        track_id = data["track_id"]
+
+        playlist_result = next(
+            memgraph.execute_and_fetch(f"MATCH (n) WHERE ID(n) = {playlist_id} RETURN n;"),
+            None,
         )
-        return jsonify({"error": True})
+        track_result = next(
+            memgraph.execute_and_fetch(f"MATCH (n) WHERE ID(n) = {track_id} RETURN n;"),
+            None,
+        )
+
+        playlist = (
+            Playlist.create_from_data(playlist_result["n"]) if playlist_result else None
+        )
+        track = Track.create_from_data(track_result["n"]) if track_result else None
+        if not playlist:
+            return jsonify({"error": True, "message": "Playlist does not exist!"})
+        if not track:
+            return jsonify({"error": True, "message": "Track does not exist!"})
+        playlist.num_tracks += 1
+        playlist.num_edits += 1
+        playlist.duration_ms += track.duration_ms
+        # Find out if playlist contains any track with existing album
+
+        same_album_num = next(
+            memgraph.execute_and_fetch(
+                f"MATCH (n:Playlist)-[r]->(m) WHERE id(n) = {playlist_id} and m.album_name"
+                f" = {to_cypher_value(track.album_name)} RETURN count(m) as counts;"
+            ),
+            0,
+        )
+
+        if same_album_num == 0:
+            playlist.num_albums += 1
+        # Find out if playlist contains any track with existing artist
+        same_artist_num = next(
+            memgraph.execute_and_fetch(
+                f"MATCH (n:Playlist)-[r]->(m) WHERE id(n) = {playlist_id} and m.artist_name"
+                f" = {to_cypher_value(track.artist_name)} RETURN count(m) as counts;"
+            ),
+            0,
+        )
+        if same_artist_num == 0:
+            playlist.num_artists += 1
+        memgraph.execute(
+            f"MATCH (n), (m) WHERE id(n) = {playlist_id} AND id(m) = {track_id} CREATE"
+            f" (n)-[:HAS]->(m) SET n = {to_cypher_value(playlist.to_map())};"
+        )
+        return jsonify({"status": Status.SUCCESS, "message": "Track added successfully!"})
     except Exception as exp:
-        return jsonify({"error": str(exp)})
+        return jsonify({"status": Status.FAILURE, "message": Status.FAILURE})
 
 
 @app.route("/create-playlist", methods=["POST"])
-def add_playlist():
+def create_playlist():
     try:
         data = request.get_json()
         name = to_cypher_value(data["name"])
         playlist = Playlist(name)
-        result = memgraph.execute_and_fetch(f"CREATE (n:{Playlist.LABEL} {{{playlist.to_cypher()}}}) RETURN id(n) as playlist_id;")
+        result = memgraph.execute_and_fetch(
+            f"CREATE (n:{Playlist.LABEL} {{{playlist.to_cypher()}}}) RETURN id(n) as"
+            " playlist_id;"
+        )
         playlist_id = next(result)["playlist_id"]
-        return jsonify({
-            "playlist_id": playlist_id,
-            "error": None
-        })
+        return jsonify(
+            {
+                "playlist_id": playlist_id,
+                "status": Status.SUCCESS,
+                "message": "Created successfully!",
+            }
+        )
     except Exception as exp:
-        return jsonify({
-            "error": exp
-        })
+        return jsonify({"status": Status.FAILURE, "message": str(exp)})
 
 
 @app.route("/")

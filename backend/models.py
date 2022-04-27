@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from datetime import datetime
+import json
 
 
 def to_cypher_value(value) -> str:
@@ -48,12 +49,14 @@ class Track:
             data.properties["track_name"],
             data.properties["album_uri"],
             data.properties["duration_ms"],
-            data.properties["album_name"]
+            data.properties["album_name"],
         )
 
     def to_cypher():
         return (
-            f"artist_name: {self.artist_name}, track_uri: {track_uri}, artist_uri: {artist_uri}, track_name: {track_name}, album_uri: {album_uri}, duration_ms: {to_cypher_value(duration_ms)}, album_name: {album_name}"
+            f"artist_name: {self.artist_name}, track_uri: {track_uri}, artist_uri:"
+            f" {artist_uri}, track_name: {track_name}, album_uri: {album_uri},"
+            f" duration_ms: {to_cypher_value(duration_ms)}, album_name: {album_name}"
         )
 
 
@@ -84,10 +87,21 @@ class Playlist:
             data.properties["num_followers"],
             data.properties["num_edits"],
             data.properties["duration_ms"],
-            data.properties["num_artists"]
+            data.properties["num_artists"],
         )
 
     def to_cypher(self):
         return (
-            f"name: {self.name}, collaborative: {to_cypher_value(self.collaborative)}, pid: {to_cypher_value(self.pid)}, modified_at: {to_cypher_value(self.modified_at)}, num_albums: {to_cypher_value(self.num_albums)}, num_tracks: {to_cypher_value(self.num_tracks)}, num_followers: {to_cypher_value(self.num_followers)}, num_edits: {to_cypher_value(self.num_edits)}, duration_ms: {to_cypher_value(self.duration_ms)}, num_artists: {to_cypher_value(self.num_artists)}"
+            f"name: {self.name}, collaborative: {to_cypher_value(self.collaborative)},"
+            f" pid: {to_cypher_value(self.pid)}, modified_at:"
+            f" {to_cypher_value(self.modified_at)}, num_albums:"
+            f" {to_cypher_value(self.num_albums)}, num_tracks:"
+            f" {to_cypher_value(self.num_tracks)}, num_followers:"
+            f" {to_cypher_value(self.num_followers)}, num_edits:"
+            f" {to_cypher_value(self.num_edits)}, duration_ms:"
+            f" {to_cypher_value(self.duration_ms)}, num_artists:"
+            f" {to_cypher_value(self.num_artists)}"
         )
+
+    def to_map(self):
+        return self.__dict__
