@@ -28,44 +28,63 @@ class Status:
 
 @app.route("/get-tracks")
 def get_tracks():
-    results = memgraph.execute_and_fetch(f"MATCH (n:Track) RETURN n;")
-    tracks = [Track.create_from_data(result["n"]) for result in results]
-    return jsonify(tracks)
+    try:
+        results = memgraph.execute_and_fetch(f"MATCH (n:Track) RETURN n;")
+        tracks = [Track.create_from_data(result["n"]) for result in results]
+        return jsonify({"tracks": tracks, "status": Status.SUCCESS, "message": ""})
+    except Exception as exp:
+        return jsonify({
+            "status": Status.FAILURE,
+            "message": exp
+        })
 
 
 @app.route("/get-top-tracks", defaults={"num_of_tracks": 10})
 @app.route("/get-top-tracks/<int:num_of_tracks>")
 def get_most_used_tracks(num_of_tracks):
-    results = memgraph.execute_and_fetch(
-        "MATCH (n:Track)<-[r]-(m) RETURN n, COUNT(m) AS edg_count ORDER BY edg_count"
-        f" DESC LIMIT {num_of_tracks};"
-    )
+    try:
+        results = memgraph.execute_and_fetch(
+            "MATCH (n:Track)<-[r]-(m) RETURN n, COUNT(m) AS edg_count ORDER BY edg_count"
+            f" DESC LIMIT {num_of_tracks};"
+        )
 
-    tracks = [
-        {
-            "track": Track.create_from_data(result["n"]),
-            "num_of_playlists": result["edg_count"],
-        }
-        for result in results
-    ]
-    return jsonify(tracks)
+        tracks = [
+            {
+                "track": Track.create_from_data(result["n"]),
+                "num_of_playlists": result["edg_count"],
+            }
+            for result in results
+        ]
+        return jsonify({"tracks": tracks, "status": Status.SUCCESS, "message": ""})
+    except Exception as exp:
+        return jsonify({
+            "status": Status.FAILURE,
+            "message": exp
+        })
 
 
 @app.route("/get-top-playlists", defaults={"num_of_playlists": 10})
 @app.route("/get-top-playlists/<int:num_of_playlists>")
 def get_playlists_with_most_tracks(num_of_playlists):
-    results = memgraph.execute_and_fetch(
-        "MATCH (n:Playlist)-[r]->(m) RETURN n, COUNT(m) AS edg_count ORDER BY"
-        f" edg_count DESC LIMIT {num_of_playlists};"
-    )
-    tracks = [
-        {
-            "playlist": Playlist.create_from_data(result["n"]),
-            "num_of_tracks": result["edg_count"],
-        }
-        for result in results
-    ]
-    return jsonify(tracks)
+    try:
+        results = memgraph.execute_and_fetch(
+            "MATCH (n:Playlist)-[r]->(m) RETURN n, COUNT(m) AS edg_count ORDER BY"
+            f" edg_count DESC LIMIT {num_of_playlists};"
+        )
+        playlists = [
+            {
+                "playlist": Playlist.create_from_data(result["n"]),
+                "num_of_tracks": result["edg_count"],
+            }
+            for result in results
+        ]
+        return jsonify({"playlists": playlists, "status": Status.SUCCESS, "message": ""})
+    except Exception as exp:
+        return jsonify({
+            "status": Status.FAILURE,
+            "message": exp
+        })
+
 
 
 @app.route("/add-track", methods=["POST"])
