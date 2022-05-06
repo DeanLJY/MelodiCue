@@ -39,9 +39,9 @@ def get_tracks():
         })
 
 
-@app.route("/get-top-tracks", defaults={"num_of_tracks": 10})
-@app.route("/get-top-tracks/<int:num_of_tracks>")
-def get_most_used_tracks(num_of_tracks):
+@app.route("/top-tracks", defaults={"num_of_tracks": 10})
+@app.route("/top-tracks/<int:num_of_tracks>")
+def get_top_tracks(num_of_tracks):
     try:
         results = memgraph.execute_and_fetch(
             "MATCH (n:Track)<-[r]-(m) RETURN n, COUNT(m) AS edg_count ORDER BY edg_count"
@@ -63,8 +63,8 @@ def get_most_used_tracks(num_of_tracks):
         })
 
 
-@app.route("/get-top-playlists", defaults={"num_of_playlists": 10})
-@app.route("/get-top-playlists/<int:num_of_playlists>")
+@app.route("/top-playlists", defaults={"num_of_playlists": 10})
+@app.route("/top-playlists/<int:num_of_playlists>")
 def get_playlists_with_most_tracks(num_of_playlists):
     try:
         results = memgraph.execute_and_fetch(
