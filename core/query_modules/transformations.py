@@ -17,7 +17,7 @@ def spotify(
             playlist_id = data["pid"]
             result_queries.append(
                 mgp.Record(
-                    query="CREATE (:Playlist {name: $name, collaborative: $collaborative,pid: $pid,modified_at: $modified_at,num_albums: $num_albums,num_tracks: $num_tracks,num_followers: $num_followers,num_edits: $num_edits,duration_ms: $duration_ms,num_artists: $num_artists});",
+                    query="CREATE (Playlist {name: $name, collaborative: $collaborative,pid: $pid,modified_at: $modified_at,num_albums: $num_albums,num_tracks: $num_tracks,num_followers: $num_followers,num_edits: $num_edits,duration_ms: $duration_ms,num_artists: $num_artists});",
                     parameters={
                         "name": data["name"],
                         "collaborative": data["collaborative"],
@@ -53,7 +53,7 @@ def spotify(
                         },
                     )
                 )
-            except JSONDecodeError as exp:
+            except json.JSONDecodeError as exp:
                 print(f"JSON error: {exp} with {payload_as_str}", file=sys.stderr)
                 continue
     return result_queries
