@@ -3,7 +3,7 @@ Flask-SQLAlchemy
 Flask-WTF
 WTForms
 coverage
-gqlaclhemy
+gqlalchemy
 # ecdsa
 # paramiko
 # pycrypto
