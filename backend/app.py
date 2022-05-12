@@ -1,20 +1,9 @@
-# ----------------------------------------------------------------------------#
-# Imports
-# ----------------------------------------------------------------------------#
-
 from flask import Flask, render_template, request, jsonify
 
-# from flask.ext.sqlalchemy import SQLAlchemy
 import logging
 from logging import Formatter, FileHandler
-from forms import *
-import os
 from gqlalchemy import Memgraph
 from models import Track, Playlist, to_cypher_value
-
-# ----------------------------------------------------------------------------#
-# App Config.
-# ----------------------------------------------------------------------------#
 
 app = Flask(__name__)
 app.config.from_object("config")
@@ -29,14 +18,11 @@ class Status:
 @app.route("/get-tracks")
 def get_tracks():
     try:
-        results = memgraph.execute_and_fetch(f"MATCH (n:Track) RETURN n;")
+        results = memgraph.execute_and_fetch("MATCH (n:Track) RETURN n;")
         tracks = [Track.create_from_data(result["n"]) for result in results]
         return jsonify({"tracks": tracks, "status": Status.SUCCESS, "message": ""})
     except Exception as exp:
-        return jsonify({
-            "status": Status.FAILURE,
-            "message": exp
-        })
+        return jsonify({"status": Status.FAILURE, "message": exp})
 
 
 @app.route("/top-tracks", defaults={"num_of_tracks": 10})
@@ -57,10 +43,7 @@ def get_top_tracks(num_of_tracks):
         ]
         return jsonify({"tracks": tracks, "status": Status.SUCCESS, "message": ""})
     except Exception as exp:
-        return jsonify({
-            "status": Status.FAILURE,
-            "message": exp
-        })
+        return jsonify({"status": Status.FAILURE, "message": exp})
 
 
 @app.route("/top-playlists", defaults={"num_of_playlists": 10})
@@ -78,13 +61,11 @@ def get_playlists_with_most_tracks(num_of_playlists):
             }
             for result in results
         ]
-        return jsonify({"playlists": playlists, "status": Status.SUCCESS, "message": ""})
+        return jsonify(
+            {"playlists": playlists, "status": Status.SUCCESS, "message": ""}
+        )
     except Exception as exp:
-        return jsonify({
-            "status": Status.FAILURE,
-            "message": exp
-        })
-
+        return jsonify({"status": Status.FAILURE, "message": exp})
 
 
 @app.route("/add-track", methods=["POST"])
@@ -95,7 +76,9 @@ def add_track():
         track_id = data["track_id"]
 
         playlist_result = next(
-            memgraph.execute_and_fetch(f"MATCH (n) WHERE ID(n) = {playlist_id} RETURN n;"),
+            memgraph.execute_and_fetch(
+                f"MATCH (n) WHERE ID(n) = {playlist_id} RETURN n;"
+            ),
             None,
         )
         track_result = next(
@@ -140,8 +123,10 @@ def add_track():
             f"MATCH (n), (m) WHERE id(n) = {playlist_id} AND id(m) = {track_id} CREATE"
             f" (n)-[:HAS]->(m) SET n = {to_cypher_value(playlist.to_map())};"
         )
-        return jsonify({"status": Status.SUCCESS, "message": "Track added successfully!"})
-    except Exception as exp:
+        return jsonify(
+            {"status": Status.SUCCESS, "message": "Track added successfully!"}
+        )
+    except Exception:
         return jsonify({"status": Status.FAILURE, "message": Status.FAILURE})
 
 
@@ -193,15 +178,9 @@ if not app.debug:
     app.logger.addHandler(file_handler)
     app.logger.info("errors")
 
-# ----------------------------------------------------------------------------#
-# Launch.
-# ----------------------------------------------------------------------------#
-
-# Default port:
 if __name__ == "__main__":
     app.run()
 
-# Or specify port manually:
 """
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
