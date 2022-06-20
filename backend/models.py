@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 from datetime import datetime
-import json
 
 
 def to_cypher_value(value) -> str:
@@ -52,11 +51,11 @@ class Track:
             data.properties["album_name"],
         )
 
-    def to_cypher():
+    def to_cypher(self):
         return (
-            f"artist_name: {self.artist_name}, track_uri: {track_uri}, artist_uri:"
-            f" {artist_uri}, track_name: {track_name}, album_uri: {album_uri},"
-            f" duration_ms: {to_cypher_value(duration_ms)}, album_name: {album_name}"
+            f"artist_name: {self.artist_name}, track_uri: {self.track_uri}, artist_uri:"
+            f" {self.artist_uri}, track_name: {self.track_name}, album_uri: {self.album_uri},"
+            f" duration_ms: {to_cypher_value(self.duration_ms)}, album_name: {self.album_name}"
         )
 
 
