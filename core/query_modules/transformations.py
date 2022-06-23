@@ -53,7 +53,7 @@ def spotify(
                         },
                     )
                 )
-            except JSONDecodeError as exp:
+            except json.JSONDecodeError as exp:
                 print(f"JSON error: {exp} with {payload_as_str}", file=sys.stderr)
                 continue
     return result_queries
