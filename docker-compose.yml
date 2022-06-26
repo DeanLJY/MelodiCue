@@ -8,16 +8,11 @@ services:
     entrypoint: ["/usr/lib/memgraph/memgraph", "--telemetry-enabled=false", "--kafka-bootstrap-servers=ec2-34-245-33-31.eu-west-1.compute.amazonaws.com:9092", "--log-level=TRACE"]
     ports:
         - "7687:7687"
-    networks:
-      - app-tier
 
-volumes:
-  zookeeper_data:
-    driver: local
-  kafka_data:
-    driver: local
-
-networks:
-  app-tier:
-    name: custom
-    driver: bridge
+  backend:
+    build:
+      context: backend
+    depends_on:
+      - memgraph
+    ports:
+      - "5000:5000"

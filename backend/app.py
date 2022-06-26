@@ -2,12 +2,11 @@ from flask import Flask, render_template, request, jsonify
 
 import logging
 from logging import Formatter, FileHandler
-from gqlalchemy import Memgraph
 from models import Track, Playlist, to_cypher_value
+from database import memgraph, setup_memgraph
 
 app = Flask(__name__)
 app.config.from_object("config")
-memgraph = Memgraph()
 
 
 class Status:
@@ -178,11 +177,14 @@ if not app.debug:
     app.logger.addHandler(file_handler)
     app.logger.info("errors")
 
+
 if __name__ == "__main__":
-    app.run()
+    setup_memgraph()
+    app.run(host="0.0.0.0")
 
 """
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
+    setup_memgraph()
     app.run(host='0.0.0.0', port=port)
 """
