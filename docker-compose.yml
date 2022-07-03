@@ -2,10 +2,16 @@ version: "3"
 
 services:
   memgraph:
-    image: memgraph/memgraph:latest
+    image: memgraph/memgraph-mage:latest
     volumes:
-        - "./memgraph/query_modules:/usr/lib/memgraph/query_modules"
-    entrypoint: ["/usr/lib/memgraph/memgraph", "--telemetry-enabled=false", "--kafka-bootstrap-servers=ec2-34-245-33-31.eu-west-1.compute.amazonaws.com:9092", "--log-level=TRACE"]
+        - "./memgraph/query_modules:/custom_modules"
+    entrypoint: [
+        "/usr/lib/memgraph/memgraph",
+        "--telemetry-enabled=false",
+        "--kafka-bootstrap-servers=ec2-34-245-33-31.eu-west-1.compute.amazonaws.com:9092",
+        "--log-level=TRACE",
+        "--query-modules-directory=/usr/lib/memgraph/query_modules,/custom_modules"
+      ]
     ports:
         - "7687:7687"
 
