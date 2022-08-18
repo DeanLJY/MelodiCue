@@ -10,8 +10,7 @@ services:
         "--telemetry-enabled=false",
         "--kafka-bootstrap-servers=ec2-34-245-33-31.eu-west-1.compute.amazonaws.com:9092",
         "--log-level=TRACE",
-        "--query-modules-directory=/usr/lib/memgraph/query_modules,/custom_modules",
-        "--memory-limit=7000"
+        "--query-modules-directory=/usr/lib/memgraph/query_modules,/custom_modules"
       ]
     ports:
         - "7687:7687"
