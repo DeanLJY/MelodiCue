@@ -10,7 +10,10 @@ def get(context: mgp.ProcCtx) -> mgp.Record(tracks=list):
     popularity of songs using the `followers`, `created_at`,
     and proximity to other popular songs (pagerank).
 
-    Equivalent to cypher query:
+    Example usage:
+        CALL trendy_tracks.get() YIELD tracks
+
+    Equivalent cypher query:
         MATCH (track:Track)<--(playlist:Playlist)
         WITH track, count(playlist) AS popularity
         RETURN track
@@ -27,7 +30,8 @@ def get(context: mgp.ProcCtx) -> mgp.Record(tracks=list):
                 nlargest(
                     10,
                     filter(
-                        lambda vertex: "Track" in vertex.labels, context.graph.vertices
+                        lambda vertex: "Track" in vertex.labels,
+                        context.graph.vertices,
                     ),
                     key=lambda vertex: sum(1 for _ in vertex.in_edges),
                 ),
