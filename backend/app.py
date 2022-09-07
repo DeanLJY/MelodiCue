@@ -1,13 +1,16 @@
+from flask import Flask, render_template, request, jsonify
+from flask_cors import CORS
+
 import logging
 from logging import FileHandler, Formatter
-
-from flask import Flask, jsonify, render_template, request
 
 from database import memgraph, setup_memgraph
 from models import Playlist, Track, to_cypher_value
 
 app = Flask(__name__)
 app.config.from_object("config")
+
+CORS(app, resources={r'/*': {'origins': '*'}})
 
 
 class Status:
@@ -74,16 +77,20 @@ def add_track():
         track_uri = data["track_uri"]
 
         playlist_result = next(
-            memgraph.execute_and_fetch(f"MATCH (n) WHERE ID(n) = {playlist_id} RETURN n;"),
+            memgraph.execute_and_fetch(
+                f"MATCH (n) WHERE ID(n) = {playlist_id} RETURN n;"),
             None,
         )
         track_result = next(
-            memgraph.execute_and_fetch(f"MATCH (n) WHERE n.track_uri = {to_cypher_value(track_uri)} RETURN n;"),
+            memgraph.execute_and_fetch(
+                f"MATCH (n) WHERE n.track_uri = {to_cypher_value(track_uri)} RETURN n;"),
             None,
         )
 
-        playlist = Playlist.create_from_data(playlist_result["n"]) if playlist_result else None
-        track = Track.create_from_data(track_result["n"]) if track_result else None
+        playlist = Playlist.create_from_data(
+            playlist_result["n"]) if playlist_result else None
+        track = Track.create_from_data(
+            track_result["n"]) if track_result else None
         if not playlist:
             return jsonify({"error": True, "message": "Playlist does not exist!"})
         if not track:
@@ -156,7 +163,8 @@ def rename_playlist():
         data = request.get_json()
         playlist_id = to_cypher_value(data["playlist_id"])
         name = to_cypher_value(data["name"])
-        memgraph.execute_and_fetch(f"MATCH (n:{Playlist.LABEL}) WHERE id(n) = {playlist_id} SET n.name = {name};")
+        memgraph.execute_and_fetch(
+            f"MATCH (n:{Playlist.LABEL}) WHERE id(n) = {playlist_id} SET n.name = {name};")
         return jsonify(
             {
                 "name": name,
@@ -179,7 +187,8 @@ def track_recommendation():
             f"CALL similar_tracks.get_better({playlist_id}, tracks) "
             "YIELD result, score RETURN result, score ORDER BY score DESC LIMIT 10; "
         )
-        tracks = [Track.create_from_data(result["result"]) for result in results]
+        tracks = [Track.create_from_data(result["result"])
+                  for result in results]
         return jsonify(
             {
                 "status": Status.SUCCESS,
@@ -209,7 +218,8 @@ def not_found_error(error):
 
 if not app.debug:
     file_handler = FileHandler("error.log")
-    file_handler.setFormatter(Formatter("%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]"))
+    file_handler.setFormatter(Formatter(
+        "%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]"))
     app.logger.setLevel(logging.INFO)
     file_handler.setLevel(logging.INFO)
     app.logger.addHandler(file_handler)

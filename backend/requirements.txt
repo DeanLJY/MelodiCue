@@ -3,3 +3,4 @@ Flask-WTF==0.15.1
 WTForms==2.3.3
 gqlalchemy==1.0.5
 Werkzeug==2.0.1
+Flask-Cors==3.0.10
