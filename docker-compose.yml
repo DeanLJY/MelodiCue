@@ -23,14 +23,3 @@ services:
       - memgraph
     ports:
       - "5000:5000"
-
-  frontend:
-    build:
-      context: frontend
-    depends_on:
-      - memgraph
-    ports:
-      - "80:80"
-    depends_on:
-      - memgraph
-      - backend

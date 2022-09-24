@@ -58,14 +58,26 @@ class Track:
             f" duration_ms: {to_cypher_value(self.duration_ms)}, album_name: {self.album_name}"
         )
 
+    @staticmethod
+    def create_from_dict(data):
+        return Track(
+            data["artist_name"],
+            data["track_uri"],
+            data["artist_uri"],
+            data["track_name"],
+            data["album_uri"],
+            data["duration_ms"],
+            data["album_name"],
+        )
+
 
 @dataclass
 class Playlist:
     LABEL = "Playlist"
 
     name: str
-    collaborative: str = False
-    pid: str = ""
+    collaborative: bool = False
+    pid: int = 0
     modified_at: datetime = ""
     num_albums: int = 0
     num_tracks: int = 0
@@ -87,6 +99,21 @@ class Playlist:
             data.properties["num_edits"],
             data.properties["duration_ms"],
             data.properties["num_artists"],
+        )
+
+    @staticmethod
+    def create_from_dict(data):
+        return Playlist(
+            data["name"],
+            data["collaborative"],
+            data["pid"],
+            data["modified_at"],
+            data["num_albums"],
+            data["num_tracks"],
+            data["num_followers"],
+            data["num_edits"],
+            data["duration_ms"],
+            data["num_artists"],
         )
 
     def to_cypher(self):

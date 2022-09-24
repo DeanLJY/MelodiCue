@@ -136,7 +136,7 @@ def add_track():
 def create_playlist():
     try:
         data = request.get_json()
-        name = to_cypher_value(data["name"])
+        name = to_cypher_value(data["playlist_name"])
         playlist = Playlist(name)
         result = memgraph.execute_and_fetch(
             f"CREATE (n:{Playlist.LABEL} {{{playlist.to_cypher()}}}) RETURN id(n) as" " playlist_id;"
@@ -158,7 +158,7 @@ def rename_playlist():
     try:
         data = request.get_json()
         playlist_id = to_cypher_value(data["playlist_id"])
-        name = to_cypher_value(data["name"])
+        name = to_cypher_value(data["playlist_name"])
         memgraph.execute_and_fetch(f"MATCH (n:{Playlist.LABEL}) WHERE id(n) = {playlist_id} SET n.name = {name};")
         return jsonify(
             {
@@ -188,6 +188,75 @@ def track_recommendation():
                 "status": Status.SUCCESS,
                 "message": "Recommendation successfully made!",
                 "tracks": tracks,
+            }
+        )
+    except Exception as exp:
+        return jsonify({"status": Status.FAILURE, "message": str(exp)}), 400
+
+
+@app.route("/playlist-recommendation", methods=["POST"])
+def playlist_recommendation():
+    try:
+        data = request.get_json()
+        playlist_id = data["playlist_id"]
+        results = next(
+            memgraph.execute_and_fetch(
+                f"MATCH (playlist:Playlist {{pid: {playlist_id}}}) "
+                "WITH playlist "
+                "LIMIT 1 "
+                "CALL similar_playlists.get(playlist) YIELD playlists "
+                "RETURN playlists "
+            ),
+            None,
+        )
+        if results:
+            playlist_list = results["playlists"]
+            response_playlist = []
+            for playlist_data in playlist_list:
+                playlist = Playlist.create_from_dict(playlist_data)
+                tracks_results = memgraph.execute_and_fetch(
+                    f"MATCH (n:Playlist {{pid: {playlist.pid} }})-[]->(m:Track) RETURN m;"
+                )
+                tracks = [Track.create_from_data(result["m"]) for result in tracks_results]
+                response_playlist.append({"playlist": playlist, "tracks": tracks})
+            return jsonify(
+                {
+                    "status": Status.SUCCESS,
+                    "message": "Recommendation successfully made!",
+                    "playlists": response_playlist,
+                }
+            )
+        return jsonify(
+            {
+                "status": Status.SUCCESS,
+                "message": "No playlists!",
+                "playlists": [],
+            }
+        )
+    except Exception as exp:
+        return jsonify({"status": Status.FAILURE, "message": str(exp)}), 400
+
+
+@app.route("/trending-tracks", methods=["GET"])
+def tranding_tracks():
+
+    try:
+        results = next(memgraph.execute_and_fetch(f"CALL trendy_tracks.get() YIELD tracks RETURN tracks"), None)
+        if results:
+            tracks_list = results["tracks"]
+            tracks = [Track.create_from_dict(result) for result in tracks_list]
+            return jsonify(
+                {
+                    "status": Status.SUCCESS,
+                    "message": "Recommendation successfully made!",
+                    "tracks": tracks,
+                }
+            )
+        return jsonify(
+            {
+                "status": Status.SUCCESS,
+                "message": "No tracks!",
+                "tracks": [],
             }
         )
     except Exception as exp:
