@@ -34,15 +34,16 @@ export default new Vuex.Store({
         })
         .catch((err) => console.log(err));
     },
-    addTrack({ commit, state }, track_uri) {
+    addTrack({ commit, state }, track) {
       console.log("addTrack ACTION");
       console.log("state.playlist_id", state.playlist_id);
-      console.log("track_uri", track_uri);
-      SongService.postAddTrack(state.playlist_id, track_uri).then((res) => {
+      console.log("track", track);
+      SongService.postAddTrack(state.playlist_id, track).then((res) => {
         commit("ADD_TRACK", {
-          track_name: res.data.track_name,
-          artist_name: res.data.artist_name,
-          track_uri: res.data.track_uri,
+          track: JSON.parse(res.config.data).track_uri,
+          // track_name: res.data.track_name,
+          // artist_name: res.data.artist_name,
+          // track_uri: res.data.track_uri,
         });
       });
     },

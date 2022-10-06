@@ -16,11 +16,11 @@
             <template>
               <v-list-item-content>
                 <v-list-item-title
-                  v-text="track.track_name"
+                  v-text="track.track.track_name"
                 ></v-list-item-title>
 
                 <v-list-item-subtitle
-                  v-text="track.artist_name"
+                  v-text="track.track.artist_name"
                 ></v-list-item-subtitle>
               </v-list-item-content>
             </template>

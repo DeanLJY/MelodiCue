@@ -55,13 +55,15 @@
 
 <script>
 import SongService from "@/services/SongService.js";
-import { mapActions, mapGetters } from "vuex";
+import { mapState, mapActions, mapGetters } from "vuex";
+
 
 export default {
   name: "ListTracks",
 
   created() {
     SongService.getTopTracks()
+    /* SongService.postTrackRecommendation(1557, ["spotify:track:6AAZigYqOch79lKcrSBOv0", "spotify:track:7s0lDK7y3XLmI7tcsRAbW0"]) */
       .then((res) => {
         this.topTracks = res.data.tracks.map((e) => e.track);
         console.log(res.data);
@@ -74,6 +76,10 @@ export default {
 
   computed: {
     ...mapGetters(["trackUris"]),
+    ...mapState({
+      playlistName: "playlist_name",
+      tracks: "tracks",
+    }),
   },
 
   methods: {

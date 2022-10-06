@@ -23,7 +23,7 @@
           </v-list-item-icon>
           <v-list-item-content>
             <v-list-item-title
-              v-text="playlist.playlist_name"
+              v-text="playlist.name"
             ></v-list-item-title>
           </v-list-item-content>
         </template>
@@ -41,58 +41,35 @@
 </template>
 
 <script>
+import SongService from "@/services/SongService.js";
+import { mapState } from "vuex";
+
 export default {
   name: "ListPlaylists",
 
+  created() {
+    /* SongService.getTopPlaylists() */
+    SongService.postPlaylistRecommendation(1557, this.tracks)
+
+      .then((res) => {
+        console.log("suggested playlist");
+        console.log(res.data.playlists);
+        this.playlists = res.data.playlists.map((e) => e.playlist);
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  },
+
+  computed: {
+    ...mapState({
+      playlistName: "playlist_name",
+      tracks: "tracks",
+    }),
+  },
+
   data: () => ({
-    playlists: [
-      {
-        active: false,
-        icon: "mdi-playlist-music",
-        playlist_id: 1,
-        playlist_name: "First",
-        tracks: [
-          {
-            track_uri: "1",
-            track_name: "First - Track 1",
-            artist_name: "First Artist",
-          },
-          {
-            track_uri: "2",
-            track_name: "First - Track 2",
-            artist_name: "First Artist",
-          },
-          {
-            track_uri: "3",
-            track_name: "First - Track 3",
-            artist_name: "First Artist",
-          },
-        ],
-      },
-      {
-        active: false,
-        icon: "mdi-playlist-music",
-        playlist_id: 2,
-        playlist_name: "Second",
-        tracks: [
-          {
-            track_uri: "1",
-            track_name: "Second - Track 1",
-            artist_name: "Second Artist",
-          },
-          {
-            track_uri: "2",
-            track_name: "Second - Track 2",
-            artist_name: "Second Artist",
-          },
-          {
-            track_uri: "3",
-            track_name: "Second - Track 3",
-            artist_name: "Second Artist",
-          },
-        ],
-      },
-    ],
+    playlists: []
   }),
 };
 </script>
