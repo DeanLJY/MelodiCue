@@ -132,6 +132,26 @@ def add_track():
         return jsonify({"status": Status.FAILURE, "message": str(exp)}), 400
 
 
+@app.route("/remove-track", methods=["POST"])
+def remove_track():
+    try:
+        data = request.get_json()
+        playlist_id = data["playlist_id"]
+        track_uri = data["track_uri"]
+
+        memgraph.execute(
+            f"MATCH (n:Playlist)-[r]->(m:Track) WHERE ID(n) = {playlist_id} AND m.track_uri = {to_cypher_value(track_uri)} DELETE r;",
+        )
+        return jsonify(
+            {
+                "status": Status.SUCCESS,
+                "message": "Track deleted successfully!",
+            }
+        )
+    except Exception as exp:
+        return jsonify({"status": Status.FAILURE, "message": str(exp)}), 400
+
+
 @app.route("/create-playlist", methods=["POST"])
 def create_playlist():
     try:
