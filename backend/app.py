@@ -202,11 +202,17 @@ def track_recommendation():
             f"CALL similar_tracks.get_better({playlist_id}, tracks) "
             "YIELD result, score RETURN result, score ORDER BY score DESC LIMIT 10; "
         )
-        tracks = [Track.create_from_data(result["result"]) for result in results]
+        tracks = [
+            {
+                "track": Track.create_from_data(result["result"]),
+                "score": result["score"],
+            }
+            for result in results
+        ]
         return jsonify(
             {
                 "status": Status.SUCCESS,
-                "message": "Recommendation successfully made!",
+                "message": "Playlist not found!",
                 "tracks": tracks,
             }
         )
@@ -238,7 +244,9 @@ def playlist_recommendation():
                     f"MATCH (n:Playlist {{pid: {playlist.pid} }})-[]->(m:Track) RETURN m;"
                 )
                 tracks = [Track.create_from_data(result["m"]) for result in tracks_results]
-                response_playlist.append({"playlist": playlist, "tracks": tracks})
+                playlist_dict = playlist.__dict__
+                playlist_dict["tracks"] = tracks
+                response_playlist.append(playlist_dict)
             return jsonify(
                 {
                     "status": Status.SUCCESS,
