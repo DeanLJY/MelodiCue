@@ -13,7 +13,7 @@
     <v-list>
       <v-list-group
         v-for="playlist in playlists"
-        :key="playlist.playlist_id"
+        :key="playlist"
         v-model="playlist.active"
         no-action
       >
@@ -48,8 +48,8 @@ export default {
   name: "ListPlaylists",
 
   created() {
-    /* SongService.getTopPlaylists() */
-    SongService.postPlaylistRecommendation(1557, this.tracks)
+    SongService.getTopPlaylists()
+    /* SongService.postPlaylistRecommendation(1557, this.tracks) */
 
       .then((res) => {
         console.log("suggested playlist");

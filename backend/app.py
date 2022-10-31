@@ -64,7 +64,9 @@ def get_playlists_with_most_tracks(num_of_playlists):
             }
             for result in results
         ]
-        return jsonify({"playlists": playlists, "status": Status.SUCCESS, "message": ""})
+        return jsonify(
+            {"playlists": playlists, "status": Status.SUCCESS, "message": ""}
+        )
     except Exception as exp:
         return jsonify({"status": Status.FAILURE, "message": exp}), 400
 
@@ -77,15 +79,21 @@ def add_track():
         track_uri = data["track_uri"]
 
         playlist_result = next(
-            memgraph.execute_and_fetch(f"MATCH (n) WHERE ID(n) = {playlist_id} RETURN n;"),
+            memgraph.execute_and_fetch(
+                f"MATCH (n) WHERE ID(n) = {playlist_id} RETURN n;"
+            ),
             None,
         )
         track_result = next(
-            memgraph.execute_and_fetch(f"MATCH (n) WHERE n.track_uri = {to_cypher_value(track_uri)} RETURN n;"),
+            memgraph.execute_and_fetch(
+                f"MATCH (n) WHERE n.track_uri = {to_cypher_value(track_uri)} RETURN n;"
+            ),
             None,
         )
 
-        playlist = Playlist.create_from_data(playlist_result["n"]) if playlist_result else None
+        playlist = (
+            Playlist.create_from_data(playlist_result["n"]) if playlist_result else None
+        )
         track = Track.create_from_data(track_result["n"]) if track_result else None
         if not playlist:
             return jsonify({"error": True, "message": "Playlist does not exist!"})
@@ -159,7 +167,8 @@ def create_playlist():
         name = to_cypher_value(data["playlist_name"])
         playlist = Playlist(name)
         result = memgraph.execute_and_fetch(
-            f"CREATE (n:{Playlist.LABEL} {{{playlist.to_cypher()}}}) RETURN id(n) as" " playlist_id;"
+            f"CREATE (n:{Playlist.LABEL} {{{playlist.to_cypher()}}}) RETURN id(n) as"
+            " playlist_id;"
         )
         playlist_id = next(result)["playlist_id"]
         return jsonify(
@@ -179,7 +188,9 @@ def rename_playlist():
         data = request.get_json()
         playlist_id = to_cypher_value(data["playlist_id"])
         name = to_cypher_value(data["playlist_name"])
-        memgraph.execute_and_fetch(f"MATCH (n:{Playlist.LABEL}) WHERE id(n) = {playlist_id} SET n.name = {name};")
+        memgraph.execute_and_fetch(
+            f"MATCH (n:{Playlist.LABEL}) WHERE id(n) = {playlist_id} SET n.name = {name};"
+        )
         return jsonify(
             {
                 "name": name,
@@ -243,7 +254,9 @@ def playlist_recommendation():
                 tracks_results = memgraph.execute_and_fetch(
                     f"MATCH (n:Playlist {{pid: {playlist.pid} }})-[]->(m:Track) RETURN m;"
                 )
-                tracks = [Track.create_from_data(result["m"]) for result in tracks_results]
+                tracks = [
+                    Track.create_from_data(result["m"]) for result in tracks_results
+                ]
                 playlist_dict = playlist.__dict__
                 playlist_dict["tracks"] = tracks
                 response_playlist.append(playlist_dict)
@@ -269,7 +282,12 @@ def playlist_recommendation():
 def tranding_tracks():
 
     try:
-        results = next(memgraph.execute_and_fetch(f"CALL trendy_tracks.get() YIELD tracks RETURN tracks"), None)
+        results = next(
+            memgraph.execute_and_fetch(
+                f"CALL trendy_tracks.get() YIELD tracks RETURN tracks"
+            ),
+            None,
+        )
         if results:
             tracks_list = results["tracks"]
             tracks = [Track.create_from_dict(result) for result in tracks_list]
@@ -309,7 +327,9 @@ def not_found_error(error):
 
 if not app.debug:
     file_handler = FileHandler("error.log")
-    file_handler.setFormatter(Formatter("%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]"))
+    file_handler.setFormatter(
+        Formatter("%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]")
+    )
     app.logger.setLevel(logging.INFO)
     file_handler.setLevel(logging.INFO)
     app.logger.addHandler(file_handler)
@@ -317,7 +337,7 @@ if not app.debug:
 
 
 if __name__ == "__main__":
-    setup_memgraph()
+    # setup_memgraph()
     app.run(host="0.0.0.0")
 
 """
