@@ -17,7 +17,7 @@ def get(context: mgp.ProcCtx, playlist: mgp.Vertex) -> mgp.Record(playlists=list
         RETURN playlists
 
     :param int playlist_id: User playlist.
-    :return: List of playlist ids that are currently trendy.
+    :return: List of playlist.
     :rtype: mgp.Record(playlist_ids=list[dict[str][Any]])
     """
     tracks = set(map(lambda edge: edge.to_vertex.id, playlist.out_edges))
