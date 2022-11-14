@@ -1,6 +1,32 @@
 version: "3"
 
 services:
+  zookeeper:
+    image: bitnami/zookeeper:3.7
+    ports:
+      - "2181:2181"
+    volumes:
+      - "zookeeper_data:/bitnami"
+    environment:
+      - ALLOW_ANONYMOUS_LOGIN=yes
+
+  kafka:
+    image: bitnami/kafka:2
+    ports:
+      - "9092:9092"
+    volumes:
+      - "kafka_data:/bitnami"
+    environment:
+      - KAFKA_BROKER_ID=1
+      - ALLOW_PLAINTEXT_LISTENER=yes
+      - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CLIENT:PLAINTEXT,EXTERNAL:PLAINTEXT
+      - KAFKA_CFG_LISTENERS=CLIENT://:9092,EXTERNAL://:9093
+      - KAFKA_CFG_ADVERTISED_LISTENERS=CLIENT://kafka:9092,EXTERNAL://localhost:9093
+      - KAFKA_INTER_BROKER_LISTENER_NAME=CLIENT
+    depends_on:
+      - zookeeper
+
   memgraph:
     image: memgraph/memgraph-mage:latest
     volumes:
@@ -8,7 +34,7 @@ services:
     entrypoint: [
         "/usr/lib/memgraph/memgraph",
         "--telemetry-enabled=false",
-        "--kafka-bootstrap-servers=ec2-34-245-33-31.eu-west-1.compute.amazonaws.com:9092",
+        "--kafka-bootstrap-servers=kafka:9092",
         "--log-level=TRACE",
         "--query-modules-directory=/usr/lib/memgraph/query_modules,/custom_modules",
         "--memory-limit=7000"
@@ -29,8 +55,23 @@ services:
       context: frontend
     depends_on:
       - memgraph
+      - backend
     ports:
       - "80:80"
     depends_on:
       - memgraph
       - backend
+
+  producer:
+    build:
+      context: producer
+    depends_on:
+      - memgraph
+      - backend
+      - kafka
+
+volumes:
+    zookeeper_data:
+        driver: local
+    kafka_data:
+        driver: local

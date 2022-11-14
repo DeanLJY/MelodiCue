@@ -3,20 +3,15 @@
 Usage:
     python3 producer.py path/to/data
 """
-import os
-import sys
 import json
+import os
 import time
+from functools import wraps
 
 import kafka
 
 
-producer = kafka.KafkaProducer(
-    bootstrap_servers=["ec2-34-245-33-31.eu-west-1.compute.amazonaws.com:9092"]
-)
-
-
-def process_mpd(path):
+def process_mpd(path, producer):
     count = 0
     filenames = os.listdir(path)
     for filename in sorted(filenames):
@@ -27,17 +22,23 @@ def process_mpd(path):
 
             mpd_slice = json.loads(js)
             for playlist in mpd_slice["playlists"]:
-                process_playlist(playlist)
+                process_playlist(playlist, producer)
             count += 1
             print(count)
 
 
-def process_playlist(playlist):
+def process_playlist(playlist, producer):
     producer.send("spotify", json.dumps(playlist).encode("utf-8"))
     producer.flush()
     time.sleep(1)
 
 
+def main():
+    # Wait for kafka to set up
+    time.sleep(10)
+    producer = kafka.KafkaProducer(bootstrap_servers=["kafka:9092"])
+    process_mpd("data", producer)
+
+
 if __name__ == "__main__":
-    path = sys.argv[1]
-    process_mpd(path)
+    main()
