@@ -337,7 +337,7 @@ if not app.debug:
 
 
 if __name__ == "__main__":
-    # setup_memgraph()
+    setup_memgraph()
     app.run(host="0.0.0.0")
 
 """

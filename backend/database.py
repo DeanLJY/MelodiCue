@@ -28,9 +28,11 @@ def setup_memgraph():
     streams = [
         stream_row["name"] for stream_row in memgraph.execute_and_fetch("SHOW STREAMS;")
     ]
+    # Wait for kafka to set up
+    sleep(5)
     if KafkaStreamConfig.STREAM_NAME not in streams:
         memgraph.execute(
-            f"CREATE STREAM {KafkaStreamConfig.STREAM_NAME} TOPICS {KafkaStreamConfig.TOPIC_NAME} TRANSFORM transformations.spotify;"
+            f"CREATE KAFKA STREAM {KafkaStreamConfig.STREAM_NAME} TOPICS {KafkaStreamConfig.TOPIC_NAME} TRANSFORM transformations.spotify BOOTSTRAP_SERVERS 'kafka:9092';"
         )
         memgraph.execute(f"START STREAM {KafkaStreamConfig.STREAM_NAME}")
     else:

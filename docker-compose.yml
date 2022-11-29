@@ -3,6 +3,8 @@ version: "3"
 services:
   zookeeper:
     image: bitnami/zookeeper:3.7
+    logging:
+      driver: none
     ports:
       - "2181:2181"
     volumes:
@@ -12,6 +14,8 @@ services:
 
   kafka:
     image: bitnami/kafka:2
+    logging:
+      driver: none
     ports:
       - "9092:9092"
     volumes:
@@ -28,14 +32,12 @@ services:
       - zookeeper
 
   memgraph:
-    image: memgraph/memgraph-mage:latest
+    image: memgraph/memgraph-mage:1.1.1
     volumes:
         - "./memgraph/query_modules:/custom_modules"
     entrypoint: [
         "/usr/lib/memgraph/memgraph",
-        "--telemetry-enabled=false",
-        "--kafka-bootstrap-servers=kafka:9092",
-        "--log-level=TRACE",
+        "--log-level=DEBUG",
         "--query-modules-directory=/usr/lib/memgraph/query_modules,/custom_modules",
         "--memory-limit=7000"
       ]
@@ -58,9 +60,6 @@ services:
       - backend
     ports:
       - "80:80"
-    depends_on:
-      - memgraph
-      - backend
 
   producer:
     build:
