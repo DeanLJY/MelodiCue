@@ -29,6 +29,7 @@ def process_mpd(path, producer):
 
 def process_playlist(playlist, producer):
     producer.send("spotify", json.dumps(playlist).encode("utf-8"))
+    print(playlist)
     producer.flush()
     time.sleep(1)
 
