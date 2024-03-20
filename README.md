@@ -70,7 +70,7 @@ MelodiCue harnesses the [Spotify Million Playlist Dataset](https://www.aicrowd.c
 2. Clone the MelodiCue repository or download the source code.
 
 ```bash
-git clone https://github.com/FalloutOne/MelodiCue.git
+git clone https://github.com/DeanLJY/MelodiCue.git
 ```
 
 3. Download the complete [Spotify Dataset](https://www.aicrowd.com/challenges/spotify-million-playlist-dataset-challenge#dataset) and replace the `.json` files in the directory `/producer/data`.
